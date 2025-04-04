@@ -16,7 +16,7 @@
       margin-top: 10px;
     }
     .output {
-      margin-top: 20px;
+      margin-top: 60px;
       font-size: 16px;
       white-space: pre-wrap;
     }
@@ -49,7 +49,7 @@
   <h1>POS Tagger</h1>
   <textarea id="inputText" placeholder="Paste your text below. For texts under 1000 words, you can view POS tags on screen. Longer texts will be downloaded as a CSV." oninput="checkLength()"></textarea><br/>
   <button id="runBtn" onclick="tagPOS()">RUN</button>
-  <button onclick="exportResults()">EXPORT</button>
+  <button id="exportBtn" onclick="runThenExport()">EXPORT</button>
   <button onclick="clearAll()">CLEAR</button>
   <div id="loader">Processing text, please wait...</div>
   <div class="output" id="output"></div>
@@ -67,7 +67,9 @@
       const text = document.getElementById("inputText").value.trim();
       const wordCount = text ? text.split(/\s+/).length : 0;
       const runBtn = document.getElementById("runBtn");
+      const outputDiv = document.getElementById("output");
       runBtn.style.display = wordCount > 0 && wordCount <= 1000 ? "inline-block" : "none";
+      if (wordCount > 1000) outputDiv.innerHTML = "";
     }
 
     function tagPOS(skipRender = false) {
@@ -82,9 +84,6 @@
       }
 
       const wordCount = text.split(/\s+/).length;
-      const showLoader = wordCount > 1000;
-
-      document.getElementById("loader").style.display = "block";
 
       setTimeout(() => {
         try {
@@ -110,9 +109,11 @@
             });
           });
 
+          document.getElementById("loader").style.display = "none";
+
           if (!skipRender) {
             if (wordCount > 1000) {
-              outputDiv.innerHTML = "Text too long to render. Downloading...";
+              outputDiv.innerHTML = "";
               exportResults(true);
             } else {
               results.forEach(({ term, tag }) => {
@@ -134,8 +135,6 @@
             }
           }
 
-          document.getElementById("loader").style.display = "none";
-
         } catch (e) {
           if (!skipRender) outputDiv.innerHTML = "Error processing text.";
           console.error("POS error:", e);
@@ -144,35 +143,41 @@
       }, 50);
     }
 
+    function runThenExport() {
+      setTimeout(() => {
+        document.getElementById("loader").style.display = "block";
+      }, 1000);
+
+      tagPOS(true);
+
+      setTimeout(() => {
+        exportResults();
+      }, 1600);
+    }
+
     function exportResults(fromTagPOS = false) {
       const text = document.getElementById("inputText").value.trim();
       if (!text) {
         alert("Please paste and process some text first.");
         return;
       }
-      if (results.length === 0 && !fromTagPOS) {
-        tagPOS(true);
+
+      if (results.length === 0) {
+        alert("No POS tags available. Please run the tagger first.");
+        return;
       }
 
-      setTimeout(() => {
-        if (results.length === 0) {
-          alert("Failed to generate POS tags.");
-          return;
-        }
+      const csvContent = "data:text/csv;charset=utf-8,Word,POS Tag\n" +
+        results.map(e => `${e.term},${e.tag}`).join("\n");
 
-        const csvContent = "data:text/csv;charset=utf-8,Word,POS Tag\n" +
-          results.map(e => `${e.term},${e.tag}`).join("\n");
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "pos_tags.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        document.getElementById("loader").style.display = "none";
-      }, 200);
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "pos_tags.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      document.getElementById("loader").style.display = "none";
     }
 
     function clearAll() {
