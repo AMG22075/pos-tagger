@@ -16,7 +16,7 @@
       margin-top: 10px;
     }
     .output {
-      margin-top: 60px;
+      margin-top: 20px;
       font-size: 16px;
       white-space: pre-wrap;
     }
@@ -38,7 +38,7 @@
       text-align: center;
     }
     #loader {
-      display: none;
+      visibility: hidden;
       font-weight: bold;
       color: #555;
       margin-top: 15px;
@@ -109,7 +109,7 @@
             });
           });
 
-          document.getElementById("loader").style.display = "none";
+          document.getElementById("loader").style.visibility = "hidden";
 
           if (!skipRender) {
             if (wordCount > 1000) {
@@ -138,14 +138,14 @@
         } catch (e) {
           if (!skipRender) outputDiv.innerHTML = "Error processing text.";
           console.error("POS error:", e);
-          document.getElementById("loader").style.display = "none";
+          document.getElementById("loader").style.visibility = "hidden";
         }
       }, 50);
     }
 
     function runThenExport() {
       setTimeout(() => {
-        document.getElementById("loader").style.display = "block";
+        document.getElementById("loader").style.visibility = "visible";
       }, 1000);
 
       tagPOS(true);
@@ -177,14 +177,14 @@
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      document.getElementById("loader").style.display = "none";
+      document.getElementById("loader").style.visibility = "hidden";
     }
 
     function clearAll() {
       document.getElementById("inputText").value = "";
       document.getElementById("output").innerHTML = "";
       document.getElementById("runBtn").style.display = "none";
-      document.getElementById("loader").style.display = "none";
+      document.getElementById("loader").style.visibility = "hidden";
       results = [];
     }
 
