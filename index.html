@@ -44,6 +44,7 @@
   <textarea id="inputText" placeholder="Paste your text below. For texts under 1000 words, you can view POS tags on screen. Longer texts will be downloaded as a CSV." oninput="checkLength()"></textarea><br/>
   <button id="runBtn" onclick="tagPOS()" style="display: none;">RUN</button>
   <button onclick="exportResults()">EXPORT</button>
+  <button onclick="clearAll()">CLEAR</button>
   <div class="output" id="output"></div>
 
   <script>
@@ -142,6 +143,13 @@
       link.setAttribute("download", "pos_tags.csv");
       document.body.appendChild(link);
       link.click();
+    }
+
+    function clearAll() {
+      document.getElementById("inputText").value = "";
+      document.getElementById("output").innerHTML = "";
+      document.getElementById("runBtn").style.display = "none";
+      results = [];
     }
 
     function getColor(tag) {
