@@ -20,11 +20,22 @@
       font-size: 16px;
       white-space: pre-wrap;
     }
-    span {
-      margin: 2px;
-      padding: 5px;
-      border-radius: 5px;
+    .word-block {
       display: inline-block;
+      margin: 4px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+    }
+    .pos-tag {
+      display: block;
+      font-size: 11px;
+      margin-top: 2px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: white;
+      text-align: center;
     }
     button {
       padding: 10px 20px;
@@ -65,13 +76,22 @@
           termBlock.terms.forEach(t => {
             const word = t.text;
             const tag = t.tags.length ? t.tags.join(", ") : "Unknown";
-
             results.push({ term: word, tag });
 
-            const span = document.createElement("span");
-            span.innerText = `${word} (${tag})`;
-            span.style.backgroundColor = getColor(tag);
-            outputDiv.appendChild(span);
+            const container = document.createElement("span");
+            container.className = "word-block";
+
+            const wordText = document.createElement("span");
+            wordText.innerText = word;
+
+            const tagLabel = document.createElement("span");
+            tagLabel.innerText = tag;
+            tagLabel.className = "pos-tag";
+            tagLabel.style.backgroundColor = getColor(tag);
+
+            container.appendChild(wordText);
+            container.appendChild(tagLabel);
+            outputDiv.appendChild(container);
           });
         });
 
@@ -101,17 +121,17 @@
     function getColor(tagString) {
       const tag = tagString.split(",")[0];
       const colors = {
-        Noun: "#ffcccb",
-        Verb: "#add8e6",
-        Adjective: "#90ee90",
-        Adverb: "#ffb6c1",
-        Pronoun: "#f0e68c",
-        Determiner: "#d3d3d3",
-        Preposition: "#ffa07a",
-        Conjunction: "#dda0dd",
-        Unknown: "#ffffff"
+        Noun: "#e74c3c",
+        Verb: "#3498db",
+        Adjective: "#2ecc71",
+        Adverb: "#9b59b6",
+        Pronoun: "#f1c40f",
+        Determiner: "#95a5a6",
+        Preposition: "#e67e22",
+        Conjunction: "#1abc9c",
+        Unknown: "#7f8c8d"
       };
-      return colors[tag] || "#eeeeee";
+      return colors[tag] || "#34495e";
     }
   </script>
 </body>
