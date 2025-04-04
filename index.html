@@ -62,14 +62,14 @@
       document.getElementById("runBtn").style.display = wordCount <= 1000 ? "inline-block" : "none";
     }
 
-    function tagPOS() {
+    function tagPOS(skipRender = false) {
       const text = document.getElementById("inputText").value.trim();
       const outputDiv = document.getElementById("output");
-      outputDiv.innerHTML = "";
+      if (!skipRender) outputDiv.innerHTML = "";
       results = [];
 
       if (!text) {
-        outputDiv.innerHTML = "Please enter some text.";
+        if (!skipRender) outputDiv.innerHTML = "Please enter some text.";
         return;
       }
 
@@ -97,30 +97,32 @@
           });
         });
 
-        if (wordCount > 1000) {
-          outputDiv.innerHTML = "Text too long to render. Downloading...";
-          exportResults();
-        } else {
-          results.forEach(({ term, tag }) => {
-            const container = document.createElement("span");
-            container.className = "word-block";
+        if (!skipRender) {
+          if (wordCount > 1000) {
+            outputDiv.innerHTML = "Text too long to render. Downloading...";
+            exportResults();
+          } else {
+            results.forEach(({ term, tag }) => {
+              const container = document.createElement("span");
+              container.className = "word-block";
 
-            const wordText = document.createElement("span");
-            wordText.innerText = term;
+              const wordText = document.createElement("span");
+              wordText.innerText = term;
 
-            const tagLabel = document.createElement("span");
-            tagLabel.innerText = tag;
-            tagLabel.className = "pos-tag";
-            tagLabel.style.backgroundColor = getColor(tag);
+              const tagLabel = document.createElement("span");
+              tagLabel.innerText = tag;
+              tagLabel.className = "pos-tag";
+              tagLabel.style.backgroundColor = getColor(tag);
 
-            container.appendChild(wordText);
-            container.appendChild(tagLabel);
-            outputDiv.appendChild(container);
-          });
+              container.appendChild(wordText);
+              container.appendChild(tagLabel);
+              outputDiv.appendChild(container);
+            });
+          }
         }
 
       } catch (e) {
-        outputDiv.innerHTML = "Error processing text.";
+        if (!skipRender) outputDiv.innerHTML = "Error processing text.";
         console.error("POS error:", e);
       }
     }
@@ -132,7 +134,7 @@
         return;
       }
       if (results.length === 0) {
-        tagPOS();
+        tagPOS(true); // Process silently if not already done
       }
       const csvContent = "data:text/csv;charset=utf-8,Word,POS Tag\n" +
         results.map(e => `${e.term},${e.tag}`).join("\n");
@@ -143,6 +145,7 @@
       link.setAttribute("download", "pos_tags.csv");
       document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
     }
 
     function clearAll() {
