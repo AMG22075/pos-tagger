@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>POS Tagger</title>
+  <script src="https://unpkg.com/compromise@13.11.3/builds/compromise.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px auto;
+      max-width: 1000px;
+    }
+    textarea {
+      width: 100%;
+      height: 300px;
+    }
+    .output {
+      margin-top: 20px;
+      font-size: 16px;
+      white-space: pre-wrap;
+    }
+    span {
+      margin: 2px;
+      padding: 5px;
+      border-radius: 5px;
+      display: inline-block;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>POS Tagger</h1>
+  <p>Paste your text below and click <strong>RUN</strong>.</p>
+  <textarea id="inputText" placeholder="Enter or paste your text here..."></textarea><br/>
+  <button onclick="tagPOS()">RUN</button>
+  <button onclick="exportResults()">EXPORT</button>
+  <div class="output" id="output"></div>
+
+  <script>
+    let results = [];
+
+    function tagPOS() {
+      const text = document.getElementById("inputText").value.trim();
+      const outputDiv = document.getElementById("output");
+      outputDiv.innerHTML = "Processing...";
+      results = [];
+
+      if (!text) {
+        outputDiv.innerHTML = "Please enter some text.";
+        return;
+      }
+
+      try {
+        const doc = nlp(text);
+        const terms = doc.terms().json();
+
+        outputDiv.innerHTML = "";
+
+        terms.forEach(termBlock => {
+          termBlock.terms.forEach(t => {
+            const word = t.text;
+            const tag = t.tags.length ? t.tags.join(", ") : "Unknown";
+
+            results.push({ term: word, tag });
+
+            const span = document.createElement("span");
+            span.innerText = `${word} (${tag})`;
+            span.style.backgroundColor = getColor(tag);
+            outputDiv.appendChild(span);
+          });
+        });
+
+      } catch (e) {
+        outputDiv.innerHTML = "Error processing text.";
+        console.error("POS error:", e);
+      }
+    }
+
+    function exportResults() {
+      if (results.length === 0) {
+        alert("No results to export. Run the tagger first.");
+        return;
+      }
+
+      const csvContent = "data:text/csv;charset=utf-8,Word,POS Tag\n" +
+        results.map(e => `${e.term},${e.tag}`).join("\n");
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "pos_tags.csv");
+      document.body.appendChild(link);
+      link.click();
+    }
+
+    function getColor(tagString) {
+      const tag = tagString.split(",")[0];
+      const colors = {
+        Noun: "#ffcccb",
+        Verb: "#add8e6",
+        Adjective: "#90ee90",
+        Adverb: "#ffb6c1",
+        Pronoun: "#f0e68c",
+        Determiner: "#d3d3d3",
+        Preposition: "#ffa07a",
+        Conjunction: "#dda0dd",
+        Unknown: "#ffffff"
+      };
+      return colors[tag] || "#eeeeee";
+    }
+  </script>
+</body>
+</html>
