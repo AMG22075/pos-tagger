@@ -37,28 +37,35 @@
       color: white;
       text-align: center;
     }
-    button {
-      padding: 10px 20px;
-      margin-top: 10px;
-      font-size: 16px;
-    }
   </style>
 </head>
 <body>
   <h1>POS Tagger</h1>
-  <p>Paste your text below and click <strong>RUN</strong>.</p>
-  <textarea id="inputText" placeholder="Enter or paste your text here..."></textarea><br/>
-  <button onclick="tagPOS()">RUN</button>
+  <p>Paste your text below. For texts under 1000 words, you can view POS tags on screen. Longer texts will be downloaded as a CSV.</p>
+  <textarea id="inputText" placeholder="Enter or paste your text here..." oninput="checkLength()"></textarea><br/>
+  <button id="runBtn" onclick="tagPOS()" style="display: none;">RUN</button>
   <button onclick="exportResults()">EXPORT</button>
   <div class="output" id="output"></div>
 
   <script>
     let results = [];
 
+    const priorityOrder = [
+      "Noun", "Verb", "Value", "Date", "Adjective", "Contraction", "Adverb", "Currency", "Determiner",
+      "Conjunction", "Preposition", "QuestionWord", "Pronoun", "Expression", "Abbreviation", "Url",
+      "HashTag", "PhoneNumber", "AtMention", "Emoji", "Emoticon", "Email", "Auxiliary", "Negative", "Acronym"
+    ];
+
+    function checkLength() {
+      const text = document.getElementById("inputText").value.trim();
+      const wordCount = text.split(/\s+/).length;
+      document.getElementById("runBtn").style.display = wordCount <= 1000 ? "inline-block" : "none";
+    }
+
     function tagPOS() {
       const text = document.getElementById("inputText").value.trim();
       const outputDiv = document.getElementById("output");
-      outputDiv.innerHTML = "Processing...";
+      outputDiv.innerHTML = "";
       results = [];
 
       if (!text) {
@@ -67,22 +74,39 @@
       }
 
       try {
+        const wordCount = text.split(/\s+/).length;
         const doc = nlp(text);
         const terms = doc.terms().json();
-
-        outputDiv.innerHTML = "";
 
         terms.forEach(termBlock => {
           termBlock.terms.forEach(t => {
             const word = t.text;
-            const tag = t.tags.length ? t.tags.join(", ") : "Unknown";
+            let tag = "Unknown";
+            if (t.tags && t.tags.length) {
+              for (const level1 of priorityOrder) {
+                if (t.tags.includes(level1)) {
+                  tag = level1;
+                  break;
+                }
+              }
+              if (tag === "Unknown") {
+                tag = t.tags.join(", ");
+              }
+            }
             results.push({ term: word, tag });
+          });
+        });
 
+        if (wordCount > 1000) {
+          outputDiv.innerHTML = "Text too long to render. Downloading...";
+          exportResults();
+        } else {
+          results.forEach(({ term, tag }) => {
             const container = document.createElement("span");
             container.className = "word-block";
 
             const wordText = document.createElement("span");
-            wordText.innerText = word;
+            wordText.innerText = term;
 
             const tagLabel = document.createElement("span");
             tagLabel.innerText = tag;
@@ -93,7 +117,7 @@
             container.appendChild(tagLabel);
             outputDiv.appendChild(container);
           });
-        });
+        }
 
       } catch (e) {
         outputDiv.innerHTML = "Error processing text.";
@@ -102,11 +126,14 @@
     }
 
     function exportResults() {
-      if (results.length === 0) {
-        alert("No results to export. Run the tagger first.");
+      const text = document.getElementById("inputText").value.trim();
+      if (!text) {
+        alert("Please paste and process some text first.");
         return;
       }
-
+      if (results.length === 0) {
+        tagPOS();
+      }
       const csvContent = "data:text/csv;charset=utf-8,Word,POS Tag\n" +
         results.map(e => `${e.term},${e.tag}`).join("\n");
 
@@ -118,8 +145,7 @@
       link.click();
     }
 
-    function getColor(tagString) {
-      const tag = tagString.split(",")[0];
+    function getColor(tag) {
       const colors = {
         Noun: "#e74c3c",
         Verb: "#3498db",
@@ -129,7 +155,24 @@
         Determiner: "#95a5a6",
         Preposition: "#e67e22",
         Conjunction: "#1abc9c",
-        Unknown: "#7f8c8d"
+        Value: "#3cb371",
+        Date: "#ffa07a",
+        Contraction: "#c0392b",
+        Currency: "#16a085",
+        QuestionWord: "#8e44ad",
+        Expression: "#2c3e50",
+        Abbreviation: "#d35400",
+        Url: "#27ae60",
+        HashTag: "#d91e18",
+        PhoneNumber: "#1f618d",
+        AtMention: "#f39c12",
+        Emoji: "#f012be",
+        Emoticon: "#9a7d0a",
+        Email: "#5dade2",
+        Auxiliary: "#7f8c8d",
+        Negative: "#34495e",
+        Acronym: "#7d3c98",
+        Unknown: "#bdc3c7"
       };
       return colors[tag] || "#34495e";
     }
